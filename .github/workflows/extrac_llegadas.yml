@@ -1,0 +1,39 @@
+name: Llegadas previstas
+
+# Todos los dias a las 00:01 UTC (+1 invierno, +2 verano para hora ES) : '1 0 * * *'
+on:
+  schedule:
+    - cron:  '10 13 * * *'
+    
+    
+jobs: 
+  llegadas_prev:
+    # The type of runner that the job will run on
+    runs-on: macos-latest
+
+    # Load repo and install R
+    steps:
+    - uses: actions/checkout@master
+    - uses: r-lib/actions/setup-r@master
+
+    # Set-up R
+    - name: Install packages
+      run: |
+        R -e 'install.packages("tidyverse")'
+        R -e 'install.packages("lubridate")'
+
+    # Run R script
+    - name: llegadas
+      run: llegadas.Rmd
+      
+ # Add new files in data folder, commit along with other modified files, push
+    - name: Commit files
+      run: |
+        git config --local user.name actions-user
+        git config --local user.email "actions@github.com"
+        git add data/*
+        git commit -am "GH ACTION Headlines $(date)"
+        git push origin main
+      env:
+        REPO_KEY: ${{secrets.GITHUB_TOKEN}}
+        username: github-actions
