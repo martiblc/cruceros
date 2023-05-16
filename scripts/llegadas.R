@@ -26,5 +26,5 @@ hoy <- today() %>%
   stringr::str_remove_all("-")
 
 # Guardar el archivo del dia con la fecha
-write_csv(llegadas_final, paste0("data/llegadas", "llegadas_", hoy, ".csv"))
+write_csv(llegadas_final, paste0("data/llegadas/", "llegadas_", hoy, ".csv"))
 
