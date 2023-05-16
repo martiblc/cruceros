@@ -3,7 +3,7 @@ name: Llegadas previstas
 # Todos los dias a las 00:01 UTC (+1 invierno, +2 verano para hora ES) : '1 0 * * *'
 on:
   schedule:
-    - cron:  '15 * * * *'
+    - cron:  '35 * * * *'
     
     
 jobs: 
@@ -24,7 +24,7 @@ jobs:
 
     # Run R script
     - name: llegadas
-      run: llegadas.R
+      run: Rscript scripts/llegadas.R
       
  # Add new files in data folder, commit along with other modified files, push
     - name: Commit files
