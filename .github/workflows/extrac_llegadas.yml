@@ -3,7 +3,7 @@ name: Llegadas previstas
 # Todos los dias a las 00:01 UTC (+1 invierno, +2 verano para hora ES) : '1 0 * * *'
 on:
   schedule:
-    - cron:  '55 * * * *'
+    - cron:  '15 * * * *'
     
     
 jobs: 
