@@ -37,16 +37,17 @@ write_csv(llegadas_final, paste0("data/llegadas/", "llegadas_", hoy, ".csv"))
 
 # SCRAPING DATOS ADICIONALES
 
-# Definir funcion
-viaje_activo <- function(enlace_barco){
+## DEFINIR FUNCION
+info_mst <- function(enlace_barco){
   # Leer pagina
   content_barco <- read_html(enlace_barco)
+  ### INFO BARCO 1
   # Extraer tipo barco
   tipo_barco <- html_node(content_barco, "h2.mb-0") %>% html_text()
   # Extraer nombre barco
   nombre_barco <- html_node(content_barco, "h1.mb-0") %>% html_text()
   # Fecha y hora salida
-  salida <- html_node(content_barco, xpath = "///*[@id='vpage-current-trip']/div[2]/div/div[1]/div/div[5]") %>% html_text()
+  salida <- html_node(content_barco, xpath = "///*[@id='vpage-current-trip']/div[2]/div/div[1]/div/div[5]") %>%         html_text()
   # Fecha y hora llegada prevista
   llegada <- html_node(content_barco, xpath = "//*[@id='vpage-current-trip']/div[2]/div/div[2]/div/div[5]") %>%
     html_text()
@@ -60,48 +61,66 @@ viaje_activo <- function(enlace_barco){
   # Puerto de destino
   puerto_destino <- html_node(content_barco, xpath = "//*[@id='vpage-current-trip']/div[2]/div/div[2]/div/div[1]/h3/a") %>%
     html_text()
-  # Codigo puerto destino 
+  # Codigo puerto destino
   puerto_destino_locode <- html_node(content_barco, xpath = "//*[@id='vpage-current-trip']/div[2]/div/div[2]/div/div[2]/div") %>%
     html_text() %>%
     str_trim()
-  # Extraer info primera tabla, la de identidad del barco
+  ### INFO BARCO 2
   info_barco <- html_node(content_barco, xpath = "//*[@id='vsl-info-card']") %>%
     html_table() %>%
     mutate(X2 = str_remove_all(X2, " Tons")) %>%
      mutate(X2 = str_replace_all(X2, ",", ".")) %>%
     pivot_wider(names_from = X1, values_from = X2) %>%
-    select(-1) %>%
-    mutate(GT = as.numeric(GT),
-           DWT = as.numeric(DWT),
-           Build = str_sub(Build, 1, 4),
-           type = tipo_barco,
-           nombre = nombre_barco,
-           departure = salida,
-           arrival = llegada,
-           origen = puerto_origen,
-           origen_code = puerto_origen_locode,
-           destino = puerto_destino,
-           destino_code = puerto_destino_locode)
+    select(-1) 
   # Limpiar nombres columnas primera tabla
   colnames(info_barco) <- colnames(info_barco) %>%
     tolower() %>%
     str_replace_all(" ", "_")
-  # Extraer la info del viaje activo 
-  viaje_activo <- html_node(content_barco, ".p-sm-2") %>%
+  # Extraer la info del viaje
+  viaje <- html_node(content_barco, ".p-sm-2") %>%
     html_table() %>%
-    pivot_wider(names_from = X1, values_from = X2)
-    # Se reune toda la info en una tabla
-  viaje_barco <- info_barco %>%
-    cbind(viaje_activo) %>%
-    mutate(url = enlace_barco)
-  return(viaje_barco)
+    pivot_wider(names_from = X1, values_from = X2) %>%
+    janitor::clean_names()
+  # Construccion del dataframe final 
+  df <- tibble(nombre_barco,
+               imo = info_barco$imo,
+               mmsi = info_barco$mmsi,
+               salida,
+               llegada,
+               puerto_origen,
+               puerto_destino,
+               puerto_origen_locode,
+               puerto_destino_locode) %>%
+    mutate(trip_time = ifelse(is_empty(viaje$trip_time), NA, viaje$trip_time),
+           time_travelled = ifelse(is_empty(viaje$time_travelled), NA, viaje$time_travelled),
+           remaining_time = ifelse(is_empty(viaje$remaining_time), NA, viaje$remaining_time),
+           trip_distance = ifelse(is_empty(viaje$trip_distance), NA, viaje$trip_distance),
+           distance_travelled = ifelse(is_empty(viaje$distance_travelled), NA, viaje$distance_travelled),
+           remaining_distance = ifelse(is_empty(viaje$remaining_distance), NA, viaje$remaining_distance))
+  # Limpieza
+  df_final <- df %>%
+    mutate(across(where(is.character), str_remove_all, " nm")) %>%
+    mutate(across(c(trip_distance, distance_travelled, remaining_distance), as.numeric)) %>%
+    mutate(distance_total = ifelse(is.na(trip_distance), distance_travelled + remaining_distance, trip_distance))
+  return(df_final)
   Sys.sleep(2)
 }
 
-# Definir enlaces y scrapear
+
+## URLS Y SCRAPING
+
+# Definir urls barcos a partir del MMSI e IMO de llegadas previstas Port BCN
 urls_barcos <- paste0("https://www.myshiptracking.com/vessels/mmsi-", llegadas_final$MMSI, "-imo-", llegadas_final$IMO)
-llegadas_mst <- map_df(urls_barcos, viaje_activo)
+
+# Iterar con map_df y possibly para evitar que error detenga todo
+llegadas_mst <- map_df(urls_barcos, possibly(info_mst))
+
+
+## GUARDAR
+
+# Definir la fecha
+hoy <- today() %>%
+  stringr::str_remove_all("-")
 
 # Guardar el archivo del dia con la fecha
 write_csv(llegadas_mst, paste0("data/llegadas/", "llegadas_mst_", hoy, ".csv"))
-
