@@ -20,7 +20,7 @@ llegadas <- read_csv("https://opendata.portdebarcelona.cat/dataset/342fe09b-017b
 
 # Join con Thetis
 # Abrir Thetis
-thetis18_21 <-  read_csv("data/thetis/thetis18_21.csv", col_types = cols(imo_number = col_character(), annual_average_fuel_consumption_per_distance_kg_n_mile = col_number())) %>%
+thetis18_21 <-  read_csv("C:/Users/mblancho/OneDrive - Groupe Figaro/Donnees/0_Scripts et projets/Cruceros BCN/thetis18_21.csv", col_types = cols(imo_number = col_character(), annual_average_fuel_consumption_per_distance_kg_n_mile = col_number())) %>%
   select(imo_number, name, annual_average_fuel_consumption_per_distance_kg_n_mile)
 # Join con el numero IMO
 llegadas_final <- llegadas %>%
@@ -31,7 +31,9 @@ llegadas_final <- llegadas %>%
 hoy <- today() %>%
   stringr::str_remove_all("-")
 # Guardar el archivo del dia con la fecha
-write_csv(llegadas_final, paste0("data/llegadas/", "llegadas_", hoy, ".csv"))
+write_csv(llegadas_final, paste0("data/llegadas/llegadas_", hoy, ".csv"))
+
+Sys.sleep(2)
 
 
 ################# Extraccion viaje MyShipTracking ########################
@@ -120,6 +122,10 @@ info_mst <- function(enlace_barco){
 
 
 # Urls y scraping
+
+llegadas_final <- read_csv(paste0("data/llegadas/llegadas_", hoy, ".csv"), col_types = cols(MMSI = col_character(), 
+                          IMO = col_character()))
+                          
 # Definir urls barcos a partir del MMSI e IMO de llegadas previstas Port BCN
 urls_barcos <- paste0("https://www.myshiptracking.com/vessels/mmsi-", llegadas_final$MMSI, "-imo-", llegadas_final$IMO)
 # Iterar con map_df y possibly para evitar que error detenga todo
