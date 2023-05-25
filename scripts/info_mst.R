@@ -92,7 +92,7 @@ hoy <- today() %>%
   stringr::str_remove_all("-")
 
 # Recuperar archivo del dia
-llegadas_final <- read_csv(paste0("data/llegadas/llegadas_", hoy, ".csv"), col_types = cols(MMSI = col_character(), 
+llegadas_final <- readr::read_csv(paste0("data/llegadas/llegadas_", hoy, ".csv"), col_types = cols(MMSI = col_character(), 
                                                                                             IMO = col_character()))
 
 # Definir urls barcos a partir del MMSI e IMO de llegadas previstas Port BCN
