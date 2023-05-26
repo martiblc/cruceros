@@ -20,7 +20,7 @@ llegadas <- read_csv("https://opendata.portdebarcelona.cat/dataset/342fe09b-017b
 
 # Join con Thetis
 # Abrir Thetis
-thetis18_21 <-  read_csv("C:/Users/mblancho/OneDrive - Groupe Figaro/Donnees/0_Scripts et projets/Cruceros BCN/thetis18_21.csv", col_types = cols(imo_number = col_character(), annual_average_fuel_consumption_per_distance_kg_n_mile = col_number())) %>%
+thetis18_21 <-  read_csv("data/thetis/thetis18_21.csv", col_types = cols(imo_number = col_character(), annual_average_fuel_consumption_per_distance_kg_n_mile = col_number())) %>%
   select(imo_number, name, annual_average_fuel_consumption_per_distance_kg_n_mile)
 # Join con el numero IMO
 llegadas_final <- llegadas %>%
